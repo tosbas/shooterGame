@@ -4,25 +4,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <title>Roulette game</title>
+    <link rel="stylesheet" href="./style.css">
+    <title>Document</title>
 </head>
 
 <body>
 
-    <audio src="roue-fortune.mp3" id="rouletteSong"></audio>
-    <audio src="cf_gagne.mp3" id="finishSong"></audio>
+    <button id="startBtn">Start</button>
+    <canvas></canvas>
 
-    <div id="overlay"></div>
+    <div class="menu">
+        <div>
+            <button id="menu-btn">Ouvrir</button>
+        </div>
+        <div class="menu-item">
+            <div class="menu-flex">
 
-    <canvas id="canvas1"></canvas>
-    <canvas id="canvas2"></canvas>
+                <div>
+                    SetPlayerRadius<input id="setPlayerRadius" type="range" value="20" step="0.5" max="300">
+                </div>
+                <div>
+                    SetPlayerMaxLife<input type="number" id="setPlayerMaxLife" value="100" step="5">
+                </div>
+                <div>
+                    SetEnemieMaxEnemies<input type="number" id="setEnemieMaxEnemies" value="100" step="1">
+                </div>
+                <div>
+                    SetPlayerShootMass<input type="number" id="setPlayerShootMass" value="500" step="10">
+                </div>
+                <div>
+                    SetPlayerShootRadius<input type="number" id="setPlayerShootRadius" value="10" step="5">
+                </div>
+                <div>
+                    SetEnemietimeEnemyAppear<input type="number" id="setEnemietimeEnemyAppear" value="1000" step="100">
+                </div>
+                <div>
+                    SetParticuleRadius<input type="number" id="setParticuleRadius" value="5" step="5">
+                </div>
+                <div>
+                    SetParticuleMax<input type="number" id="setParticuleMax" value="50" step="1">
+                </div>
+                <div>
+                    SetParticleMass<input type="number" id="setParticleMass" value="8" step="0.01">
+                </div>
+                <div>
+                    SetParticleVelocityMagnitude<input type="number" id="setParticleVelocityMagnitude" value="0.5"
+                        step="0.5">
+                </div>
+                <div>
+                    SetMinAngleSpread<input type="number" id="setMinAngleSpread" value="0.5" step="0.5">
+                </div>
+                <div>
+                    SetMaxAngleSpread<input type="number" id="setMaxAngleSpread" value="0.5" step="0.5">
+                </div>
+                <div>
+                    SetVelocityReductionFactor<input type="number" id="setVelocityReductionFactor" value="0.07"
+                        step="0.01">
+                </div>
+                <div>
+                    SetDampingFactor<input type="number" id="setDampingFactor" value="0.8" step="0.1">
+                </div>
+                <div>
+                    SetOverlapReductionFactor<input type="number" id="setOverlapReductionFactor" value="0.07"
+                        step="0.01">
+                </div>
+            </div>
 
-    <div id="btn-turn-wheel">
-        <div id="result">GO !</div>
-    </div>
+            <script type="module" src="./main.js"></script>
 
-    <script src="game.js"></script>
 </body>
 
 </html>
