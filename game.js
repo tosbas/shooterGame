@@ -298,6 +298,8 @@ class Game {
          */
         this.particleMass = 8;
 
+        this.particleRadiusRadiusAfterColid = 0.03;
+
         /**
          * Magnitude de la vitesse des particules.
          * @type {number}
@@ -388,6 +390,7 @@ class Game {
 
         this.startBtn.style.display = "block";
         this.player.draw();
+        this.displayText();
     }
 
     /**
@@ -405,11 +408,11 @@ class Game {
      */
     play(deltaTime, ctx) {
         this.player.draw(deltaTime);
-        this.displayText();
         this.drawEnemies(deltaTime, ctx);
         this.checkCollisions();
         this.updateParticles(deltaTime, this.player);
         this.drawParticles();
+        this.displayText();
     }
 
     /**
@@ -528,7 +531,7 @@ class Game {
 
             particle.x += particle.velocity.x * deltaTime;
             particle.y += particle.velocity.y * deltaTime;
-            particle.radius -= 0.03;
+            particle.radius -= this.particleRadiusRadiusAfterColid;
 
             if (particle.radius <= 0) {
                 this.particles.splice(i, 1);
@@ -714,9 +717,9 @@ class Game {
      * Affiche les informations textuelles à l'écran.
      */
     displayText() {
-        this.text("Score: " + this.score, 50);
-        this.text("Vie: " + this.life, 100);
-        this.text("Ennemis: " + this.totalEnemies, 150);
+        this.text("Score: " + this.score, this.canvas.height - 50);
+        this.text("Vie: " + this.life, this.canvas.height - 100);
+        this.text("Ennemis: " + this.totalEnemies, this.canvas.height - 150);
     }
 
     /**
@@ -766,6 +769,13 @@ class Game {
      * @param {int} life 
      */
     setPlayerMaxLife(maxLife) {
+
+        if (maxLife === -1) {
+            maxLife = Infinity;
+        }
+
+        console.log(maxLife);
+
         this.maxLife = maxLife;
         this.life = maxLife;
     }
@@ -775,6 +785,11 @@ class Game {
       * @param {int} 
       */
     setEnemieMaxEnemies(maxEnemies) {
+
+        if (maxEnemies === -1) {
+            maxEnemies = Infinity;
+        }
+
         this.maxEnemies = maxEnemies;
         this.totalEnemies = maxEnemies;
     }
@@ -860,12 +875,16 @@ class Game {
         this.overlapReductionFactor = overlapReductionFactor;
     }
 
+    setParticleRadiusAfterColid(radius) {
+        this.particleRadiusRadiusAfterColid = radius;
+    }
+
 
     /***********************\
     |         GETTER         | 
     \***********************/
 
-    getPlayerRadius(){
+    getPlayerRadius() {
         return this.player.radius;
     }
 }
