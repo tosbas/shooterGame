@@ -12,6 +12,8 @@ class Player {
 
         this.ctx = ctx;
 
+        this.mass = 300;
+
         /**
          * Position en abscisse du joueur.
          * @type {number}
@@ -565,21 +567,27 @@ class Game {
         }
     }
 
-    handlePlayerCollision(particle, player) {
-        if (this.detectCollision(player, particle)) {
-            const angle = Math.atan2(particle.y - player.y, particle.x - player.x);
-            const overlap = particle.radius + player.radius - this.distance(player, particle);
+  handlePlayerCollision(particle, player) {
+    if (this.detectCollision(player, particle)) {
+        const angle = Math.atan2(particle.y - player.y, particle.x - player.x);
+        const overlap = particle.radius + player.radius - this.distance(player, particle);
 
-            // Correction de la position
-            particle.x += Math.cos(angle) * overlap * this.overlapReductionFactor;
-            particle.y += Math.sin(angle) * overlap * this.overlapReductionFactor;
+        // Correction de la position
+        particle.x += Math.cos(angle) * overlap * this.overlapReductionFactor;
+        particle.y += Math.sin(angle) * overlap * this.overlapReductionFactor;
 
-            // Correction de la vitesse
-            const relativeSpeed = particle.velocity.x * Math.cos(angle) + particle.velocity.y * Math.sin(angle);
-            particle.velocity.x -= this.dampingFactor * relativeSpeed * Math.cos(angle);
-            particle.velocity.y -= this.dampingFactor * relativeSpeed * Math.sin(angle);
+        // Correction de la vitesse
+        const speedAlongNormal = particle.velocity.x * Math.cos(angle) + particle.velocity.y * Math.sin(angle);
+
+        if (speedAlongNormal < 0) {
+            const impulse = (2 * particle.mass) / (particle.mass + player.mass) * speedAlongNormal;
+
+            particle.velocity.x -= impulse * Math.cos(angle);
+            particle.velocity.y -= impulse * Math.sin(angle);
         }
     }
+}
+
 
     handleOtherParticlesCollision(particle) {
         for (let j = 0; j < this.particles.length; j++) {
@@ -616,10 +624,8 @@ class Game {
                 particle.y += Math.sin(angle) * overlap * this.overlapReductionFactor;
 
                 // Correction de la vitesse en tenant compte de la masse du tir
-                const relativeSpeed = particle.velocity.x * Math.cos(angle) + particle.velocity.y * Math.sin(angle);
-                const impulse = (2 * shoot.mass) / (particle.mass + shoot.mass) * relativeSpeed;
-                particle.velocity.x += impulse * Math.cos(angle);
-                particle.velocity.y += impulse * Math.sin(angle);
+                particle.velocity.x += Math.cos(angle) * shoot.mass;
+                particle.velocity.y += Math.sin(angle) * shoot.mass;
             }
         }
     }
@@ -637,11 +643,8 @@ class Game {
                 particle.y += Math.sin(angle) * overlap * this.overlapReductionFactor;
 
                 // Correction de la vitesse en tenant compte de la masse de l'ennemi
-                const relativeSpeed = particle.velocity.x * Math.cos(angle) + particle.velocity.y * Math.sin(angle);
-                const impulse = (2 * enemy.mass) / (particle.mass + enemy.mass) * relativeSpeed;
-
-                particle.velocity.x -= impulse * Math.cos(angle);
-                particle.velocity.y -= impulse * Math.sin(angle);
+                particle.velocity.x += Math.cos(angle) * enemy.mass;
+                particle.velocity.y += Math.sin(angle) * enemy.mass;
             }
         }
     }
@@ -732,7 +735,7 @@ class Game {
             this.currentCountEnemies++;
         }
 
-        setTimeout(() => this.addEnemy(), this.timeEnemyAppearInMs);
+        setTimeout(() => this.addEnemy(), this.timeEnemyAppearInMs * (2 - this.deltaTime));
     }
 
     /**
