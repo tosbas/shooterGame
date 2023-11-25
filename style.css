@@ -37,13 +37,18 @@ body {
     color: white;
     font-weight: bolder;
     padding: 5px;
+}
 
+.menu-flex{
+    overflow: auto;
+    max-height: 600px;
 }
 
 .menu-flex div {
     display: flex;
     justify-content: space-between;
     align-items: center;
+  
 }
 
 .menu button {

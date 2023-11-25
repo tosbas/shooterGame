@@ -22,6 +22,8 @@ const game = new Game(canvas, ctx, startBtn, player);
 
 game.run();
 
+const setterLocalStorage = [];
+
 /**
  * Ecoute le changement de valeur sur un button 
  * @param {object} button 
@@ -37,9 +39,18 @@ const setParameterChange = (button) => {
             const value = parseFloat(e.target.value);
             game[methode](value);
             resultNode.innerHTML = value;
+
+            const setterId = setterLocalStorage.findIndex(setter => setter.id === methode);
+            setterLocalStorage[setterId].value = value;
+            setterLocalStorage.push({ "id": button.id, "value": button.value });
+            localStorage.setItem("config", JSON.stringify(setterLocalStorage));
         }
     });
 };
+
+
+
+
 
 for (const button of setBtns) {
     const result = document.createElement("div");
@@ -49,6 +60,16 @@ for (const button of setBtns) {
     result.style.color = "black";
     result.style.borderRadius = "10px"
     button.parentNode.insertBefore(result, button.nextSibling);
+    setterLocalStorage.push({ "id": button.id, "value": button.value });
+
+    if (localStorage.getItem("config")) {
+        const config = JSON.parse(localStorage.getItem('config'));
+        const setterId = config.findIndex(setter=> setter.id === button.id);
+        setterLocalStorage[setterId].value = parseFloat(config[setterId].value);
+        game[button.id](setterLocalStorage[setterId].value);
+        button.value = setterLocalStorage[setterId].value;
+    }
+
     setParameterChange(button);
 }
 

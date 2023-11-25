@@ -46,7 +46,9 @@ class Player {
          * Masse des tirs du joueur.
          * @type {number}
          */
-        this.shootMass = 500;
+        this.shootMass = 10;
+
+        this.shootSpeed = 1000;
 
         /**
          * Tableau contenant les informations sur les tirs du joueur.
@@ -74,7 +76,7 @@ class Player {
      * @param {number} angle - Angle de tir en radians.
      */
     shoot(angle) {
-        this.shoots.push({ x: this.x, y: this.y, angle, mass: this.shootMass, radius: this.shootRadius });
+        this.shoots.push({ x: this.x, y: this.y, angle, mass: this.shootMass, speed: this.shootSpeed, radius: this.shootRadius });
     }
 
     /**
@@ -83,8 +85,12 @@ class Player {
      */
     updateShoots(deltaTime) {
         this.shoots.forEach((shoot, index) => {
-            shoot.x += Math.cos(shoot.angle) * shoot.mass * deltaTime;
-            shoot.y += Math.sin(shoot.angle) * shoot.mass * deltaTime;
+            const acceleration = shoot.speed / shoot.mass;
+
+            shoot.speed += acceleration * deltaTime;
+
+            shoot.x += Math.cos(shoot.angle) * shoot.speed * deltaTime;
+            shoot.y += Math.sin(shoot.angle) * shoot.speed * deltaTime;
             this.drawShoot(shoot);
 
             if (this.isOutOfBounds(shoot)) {
@@ -130,12 +136,12 @@ class Enemy {
      * @constructor
      * @param {string} color - Couleur de l'ennemi.
      */
-    constructor(color) {
+    constructor(color, enemieRadius, enemieSpeed, enemieMass) {
         /**
          * Rayon de l'ennemi.
          * @type {number}
          */
-        this.radius = 50;
+        this.radius = enemieRadius;
 
         /**
          * Couleur de l'ennemi.
@@ -143,11 +149,13 @@ class Enemy {
          */
         this.color = color;
 
+        this.mass = enemieMass;
+
         /**
          * Vitesse de déplacement aléatoire de l'ennemi.
          * @type {number}
          */
-        this.speed = Math.random() * 500 + 300;
+        this.speed = enemieSpeed;
 
         // Appelle la méthode spawn pour initialiser la position de l'ennemi.
         this.spawn();
@@ -189,6 +197,11 @@ class Enemy {
      * @param {number} deltaTime - Temps écoulé depuis la dernière frame.
      */
     update(deltaTime, player) {
+
+        const acceleration = this.speed / this.mass;
+
+        this.speed += acceleration * deltaTime;
+
         const angle = Math.atan2(player.y - this.y, player.x - this.x);
         this.x += Math.cos(angle) * this.speed * deltaTime;
         this.y += Math.sin(angle) * this.speed * deltaTime;
@@ -205,7 +218,6 @@ class Enemy {
 class Game {
     constructor(canvas, ctx, startBtn, player, maxLife = Infinity, maxEnemies = Infinity) {
 
-
         this.canvas = canvas;
 
         this.ctx = ctx;
@@ -217,6 +229,12 @@ class Game {
          * @type {Object}
          */
         this.player = player;
+
+        this.enemieSpeed = 1000;
+
+        this.enemieMass = 1000;
+
+        this.enemieRadius = 10;
 
         /**
          * Liste des ennemis présents dans le jeu.
@@ -247,6 +265,8 @@ class Game {
          * @type {number}
          */
         this.score = 0;
+
+        this.slowMo = 1;
 
         /**
          * Vie maximale du joueur (par défaut à l'infini).
@@ -410,7 +430,7 @@ class Game {
         this.player.draw(deltaTime);
         this.drawEnemies(deltaTime, ctx);
         this.checkCollisions();
-        this.updateParticles(deltaTime, this.player);
+        this.updateParticles(deltaTime, this.player, this.enemies);
         this.drawParticles();
         this.displayText();
     }
@@ -453,12 +473,14 @@ class Game {
 
         if (this.life <= 0) {
             this.gameOver = true;
+            this.resetGame();
             cancelAnimationFrame(this.requestId);
             return;
         }
 
         if (this.totalEnemies <= 0) {
             this.gameOver = true;
+            this.resetGame();
         }
     }
 
@@ -479,6 +501,7 @@ class Game {
 
         if (this.totalEnemies <= 0) {
             this.gameOver = true;
+            this.resetGame();
             cancelAnimationFrame(this.requestId);
             return;
         }
@@ -514,7 +537,7 @@ class Game {
      * Met à jour les particules en fonction du temps écoulé.
      * @param {number} deltaTime - Le temps écoulé depuis la dernière image.
      */
-    updateParticles(deltaTime, player) {
+    updateParticles(deltaTime, player, enemie) {
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const particle = this.particles[i];
 
@@ -529,9 +552,11 @@ class Game {
 
             this.isOutOfBoundsParticle(particle);
 
+            this.handleEnemiesParticleCollision(particle, enemie);
+
             particle.x += particle.velocity.x * deltaTime;
             particle.y += particle.velocity.y * deltaTime;
-            particle.radius -= this.particleRadiusRadiusAfterColid;
+            particle.radius -= this.particleRadiusRadiusAfterColid * deltaTime;
 
             if (particle.radius <= 0) {
                 this.particles.splice(i, 1);
@@ -563,16 +588,16 @@ class Game {
                 if (this.detectCollision(particle, otherParticle)) {
                     const angle = Math.atan2(particle.y - otherParticle.y, particle.x - otherParticle.x);
 
+                    // Correction de la position
+                    const overlap = particle.radius + otherParticle.radius - this.distance(particle, otherParticle);
+                    particle.x += Math.cos(angle) * overlap * this.overlapReductionFactor;
+                    particle.y += Math.sin(angle) * overlap * this.overlapReductionFactor;
+
                     particle.velocity.x += Math.cos(angle) * particle.mass;
                     particle.velocity.y += Math.sin(angle) * particle.mass;
 
                     otherParticle.velocity.x -= Math.cos(angle) * otherParticle.mass;
                     otherParticle.velocity.y -= Math.sin(angle) * otherParticle.mass;
-
-                    // Correction de la position
-                    const overlap = particle.radius + otherParticle.radius - this.distance(particle, otherParticle);
-                    particle.x += Math.cos(angle) * overlap * this.overlapReductionFactor;
-                    particle.y += Math.sin(angle) * overlap * this.overlapReductionFactor;
                 }
             }
         }
@@ -583,12 +608,39 @@ class Game {
             const shoot = this.player.shoots[k];
             if (this.detectCollision(shoot, particle)) {
                 const angle = Math.atan2(particle.y - shoot.y, particle.x - shoot.x);
-                particle.velocity.x += Math.cos(angle) * this.player.shootMass;
 
                 // Correction de la position
                 const overlap = particle.radius + shoot.radius - this.distance(particle, shoot);
                 particle.x += Math.cos(angle) * overlap * this.overlapReductionFactor;
                 particle.y += Math.sin(angle) * overlap * this.overlapReductionFactor;
+
+                // Correction de la vitesse en tenant compte de la masse du tir
+                const relativeSpeed = particle.velocity.x * Math.cos(angle) + particle.velocity.y * Math.sin(angle);
+                const impulse = (2 * shoot.mass) / (particle.mass + shoot.mass) * relativeSpeed;
+                particle.velocity.x += impulse * Math.cos(angle);
+                particle.velocity.y += impulse * Math.sin(angle);
+            }
+        }
+    }
+
+
+    handleEnemiesParticleCollision(particle, enemies) {
+        for (let i = 0; i < enemies.length; i++) {
+            const enemy = enemies[i];
+            if (this.detectCollision(enemy, particle)) {
+                const angle = Math.atan2(particle.y - enemy.y, particle.x - enemy.x);
+                const overlap = particle.radius + enemy.radius - this.distance(enemy, particle);
+
+                // Correction de la position
+                particle.x += Math.cos(angle) * overlap * this.overlapReductionFactor;
+                particle.y += Math.sin(angle) * overlap * this.overlapReductionFactor;
+
+                // Correction de la vitesse en tenant compte de la masse de l'ennemi
+                const relativeSpeed = particle.velocity.x * Math.cos(angle) + particle.velocity.y * Math.sin(angle);
+                const impulse = (2 * enemy.mass) / (particle.mass + enemy.mass) * relativeSpeed;
+
+                particle.velocity.x -= impulse * Math.cos(angle);
+                particle.velocity.y -= impulse * Math.sin(angle);
             }
         }
     }
@@ -675,7 +727,7 @@ class Game {
             const l = 50;
 
             const color = `hsl(${h},${s}%, ${l}%)`;
-            this.enemies.push(new Enemy(color, this.speedEnemies));
+            this.enemies.push(new Enemy(color, this.enemieRadius, this.enemieSpeed, this.enemieMass));
             this.currentCountEnemies++;
         }
 
@@ -689,12 +741,6 @@ class Game {
         startBtn.addEventListener('click', () => {
             this.gameOver = false;
             this.startBtn.style.display = "none";
-            this.life = this.maxLife;
-            this.currentCountEnemies = 0;
-            this.particles = [];
-            this.score = 0;
-            this.enemies = [];
-            this.totalEnemies = this.maxEnemies;
             this.update();
         });
     }
@@ -705,7 +751,7 @@ class Game {
     update() {
         this.requestId = requestAnimationFrame(() => this.update());
         const now = Date.now();
-        const deltaTime = (now - this.now) / 1000;
+        const deltaTime = ((now - this.now) / 1000) * this.slowMo;
         this.ctx.fillStyle = "rgba(0,0,0,0.5)";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.run(deltaTime);
@@ -735,6 +781,15 @@ class Game {
         this.ctx.fillText(text, posX, posY);
     }
 
+    resetGame() {
+        this.life = this.maxLife;
+        this.currentCountEnemies = 0;
+        this.particles = [];
+        this.score = 0;
+        this.enemies = [];
+        this.totalEnemies = this.maxEnemies;
+    }
+
     /***********************\
     |         SETTER         | 
     \***********************/
@@ -755,6 +810,10 @@ class Game {
         this.player.shootMass = mass;
     }
 
+    setPlayerShootSpeed(speed){
+        this.player.shootSpeed = speed;
+    }
+
     /**
      * Définie le rayon des tirs du joueur.
      * @type {number}
@@ -773,8 +832,6 @@ class Game {
         if (maxLife === -1) {
             maxLife = Infinity;
         }
-
-        console.log(maxLife);
 
         this.maxLife = maxLife;
         this.life = maxLife;
@@ -800,6 +857,18 @@ class Game {
     */
     setEnemietimeEnemyAppear(time) {
         this.timeEnemyAppearInMs = time
+    }
+
+    setEnemieMass(mass) {
+        this.enemieMass = mass;
+    }
+
+    setEnemieSpeed(speed) {
+        this.enemieSpeed = speed;
+    }
+
+    setEnemieRadius(radius) {
+        this.enemieRadius = radius;
     }
 
 
@@ -879,6 +948,9 @@ class Game {
         this.particleRadiusRadiusAfterColid = radius;
     }
 
+    setSlowMo(time){
+        this.slowMo = time;
+    }
 
     /***********************\
     |         GETTER         | 

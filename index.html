@@ -21,13 +21,13 @@
             <div class="menu-flex">
 
                 <div>
+                    SetSlowMo<input id="setSlowMo" type="range" min="0" value="1" step="0.01" max="1">
+                </div>
+                <div>
                     SetPlayerRadius<input id="setPlayerRadius" type="range" min="1" value="20" step="0.5" max="300">
                 </div>
                 <div>
                     SetPlayerMaxLife<input type="range" id="setPlayerMaxLife" min="-1" value="100" step="5">
-                </div>
-                <div>
-                    SetEnemieMaxEnemies<input type="range" id="setEnemieMaxEnemies" min="-1" value="100" step="1" max="1000">
                 </div>
                 <div>
                     SetPlayerShootMass<input type="range" id="setPlayerShootMass" min="1" value="500" step="10">
@@ -36,13 +36,31 @@
                     SetPlayerShootRadius<input type="range" id="setPlayerShootRadius" min="1" value="10" step="5">
                 </div>
                 <div>
-                    SetEnemietimeEnemyAppear<input type="range" id="setEnemietimeEnemyAppear" min="100" value="1000" step="100" max="100000">
+                    SetPlayerShootSpeed<input type="range" id="setPlayerShootSpeed" min="1" value="1000" step="5"
+                        max="2000">
+                </div>
+                <div>
+                    SetEnemieMaxEnemies<input type="range" id="setEnemieMaxEnemies" min="-1" value="100" step="1"
+                        max="1000">
+                </div>
+                <div>
+                    SetEnemietimeEnemyAppear<input type="range" id="setEnemietimeEnemyAppear" min="100" value="1000"
+                        step="100" max="100000">
+                </div>
+                <div>
+                    SetEnemieSpeed<input type="range" id="setEnemieSpeed" min="0" value="1000" step="1" max="1000">
+                </div>
+                <div>
+                    SetEnemieRadius<input type="range" id="setEnemieRadius" min="1" value="10" step="1" max="1000">
+                </div>
+                <div>
+                    SetEnemieMass<input type="range" id="setEnemieMass" min="0" value="1000" step="0.5" max="1000">
                 </div>
                 <div>
                     SetParticuleRadius<input type="range" id="setParticuleRadius" min="5" value="5" step="5" max="100">
                 </div>
                 <div>
-                    SetParticleRadiusAfterColid<input type="range" id="setParticleRadiusAfterColid" min="0.01" value="0.03"
+                    SetParticleRadiusAfterColid<input type="range" id="setParticleRadiusAfterColid" min="0" value="0.03"
                         step="0.01" max="5">
                 </div>
                 <div>
@@ -52,27 +70,30 @@
                     SetParticleMass<input type="range" id="setParticleMass" min="0" value="8" step="0.01">
                 </div>
                 <div>
-                    SetParticleVelocityMagnitude<input type="range" id="setParticleVelocityMagnitude" min="0.01" value="0.5"
-                        step="0.5">
+                    SetParticleVelocityMagnitude<input type="range" id="setParticleVelocityMagnitude" min="0.01"
+                        value="0.5" step="0.5">
                 </div>
                 <div>
-                    SetMinAngleSpread<input type="range" id="setMinAngleSpread" min="0.01" value="0.5" step="0.5" max="1">
+                    SetMinAngleSpread<input type="range" id="setMinAngleSpread" min="0.01" value="0.5" step="0.01"
+                        max="1">
                 </div>
                 <div>
-                    SetMaxAngleSpread<input type="range" id="setMaxAngleSpread" min="0.01" value="0.5" step="0.5" max="1">
+                    SetMaxAngleSpread<input type="range" id="setMaxAngleSpread" min="0.01" value="0.5" step="0.01"
+                        max="1">
                 </div>
                 <div>
-                    SetVelocityReductionFactor<input type="range" id="setVelocityReductionFactor" min="0.01" value="0.07"
-                        step="0.01" max="1">
+                    SetVelocityReductionFactor<input type="range" id="setVelocityReductionFactor" min="0.01"
+                        value="0.07" step="0.01" max="1">
                 </div>
                 <div>
-                    SetDampingFactor<input type="range" id="setDampingFactor" min="0.01" value="0.8" step="0.01" max="1">
+                    SetDampingFactor<input type="range" id="setDampingFactor" min="0.01" value="0.8" step="0.01"
+                        max="1">
                 </div>
                 <div>
                     SetOverlapReductionFactor<input type="range" id="setOverlapReductionFactor" min="0.01" value="0.07"
                         step="0.01" max="1">
                 </div>
-                
+
             </div>
 
             <script type="module" src="./main.js"></script>
