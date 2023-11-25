@@ -266,7 +266,6 @@ class Game {
          */
         this.score = 0;
 
-        this.slowMo = 1;
 
         /**
          * Vie maximale du joueur (par défaut à l'infini).
@@ -392,6 +391,12 @@ class Game {
          */
         this.now = Date.now();
 
+        this.deltaTime = 0;
+
+        this.elapsedTime = 0;
+
+        this.slowMo = 1;
+
         // Liaison des événements et démarrage de la boucle de jeu
         this.bindEvent();
         this.update();
@@ -402,14 +407,15 @@ class Game {
      * Exécute la boucle de jeu en fonction du temps écoulé.
      * @param {number} deltaTime - Le temps écoulé depuis la dernière image.
      */
-    run(deltaTime, ctx) {
+    run() {
         if (!this.gameOver) {
-            this.play(deltaTime, ctx);
+            this.play();
+            this.elapsedTime += this.deltaTime;
             return;
         }
 
         this.startBtn.style.display = "block";
-        this.player.draw();
+        this.player.draw(this.deltaTime);
         this.displayText();
     }
 
@@ -426,11 +432,11 @@ class Game {
      * Exécute la logique du jeu pendant le gameplay actif.
      * @param {number} deltaTime - Le temps écoulé depuis la dernière image.
      */
-    play(deltaTime, ctx) {
-        this.player.draw(deltaTime);
-        this.drawEnemies(deltaTime, ctx);
+    play() {
+        this.player.draw(this.deltaTime);
+        this.drawEnemies(this.ctx);
         this.checkCollisions();
-        this.updateParticles(deltaTime, this.player, this.enemies);
+        this.updateParticles(this.player, this.enemies);
         this.drawParticles();
         this.displayText();
     }
@@ -439,9 +445,9 @@ class Game {
      * Dessine les ennemis en fonction du temps écoulé.
      * @param {number} deltaTime - Le temps écoulé depuis la dernière image.
      */
-    drawEnemies(deltaTime) {
+    drawEnemies() {
         for (const enemy of this.enemies) {
-            enemy.draw(deltaTime, this.player, this.ctx);
+            enemy.draw(this.deltaTime, this.player, this.ctx);
         }
     }
 
@@ -473,14 +479,13 @@ class Game {
 
         if (this.life <= 0) {
             this.gameOver = true;
-            this.resetGame();
+            this.life = 0;
             cancelAnimationFrame(this.requestId);
-            return;
         }
 
         if (this.totalEnemies <= 0) {
             this.gameOver = true;
-            this.resetGame();
+            cancelAnimationFrame(this.requestId);
         }
     }
 
@@ -501,9 +506,8 @@ class Game {
 
         if (this.totalEnemies <= 0) {
             this.gameOver = true;
-            this.resetGame();
             cancelAnimationFrame(this.requestId);
-            return;
+
         }
     }
 
@@ -513,9 +517,6 @@ class Game {
      * @param {Object} enemy - L'objet ennemi touché.
      */
     createParticule(shoot, enemy) {
-        const dx = shoot.x - enemy.x;
-        const dy = shoot.y - enemy.y;
-
         for (let i = 0; i < this.maxParticules; i++) {
             const angleWithSpread = this.minAngleSpread + Math.random() * (this.maxAngleSpread - this.minAngleSpread);
 
@@ -537,7 +538,7 @@ class Game {
      * Met à jour les particules en fonction du temps écoulé.
      * @param {number} deltaTime - Le temps écoulé depuis la dernière image.
      */
-    updateParticles(deltaTime, player, enemie) {
+    updateParticles(player, enemie) {
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const particle = this.particles[i];
 
@@ -554,9 +555,9 @@ class Game {
 
             this.handleEnemiesParticleCollision(particle, enemie);
 
-            particle.x += particle.velocity.x * deltaTime;
-            particle.y += particle.velocity.y * deltaTime;
-            particle.radius -= this.particleRadiusRadiusAfterColid * deltaTime;
+            particle.x += particle.velocity.x * this.deltaTime;
+            particle.y += particle.velocity.y * this.deltaTime;
+            particle.radius -= this.particleRadiusRadiusAfterColid * this.deltaTime;
 
             if (particle.radius <= 0) {
                 this.particles.splice(i, 1);
@@ -740,7 +741,7 @@ class Game {
     handleStartBtn(startBtn) {
         startBtn.addEventListener('click', () => {
             this.gameOver = false;
-            this.startBtn.style.display = "none";
+            this.resetGame();
             this.update();
         });
     }
@@ -754,9 +755,10 @@ class Game {
         const deltaTime = ((now - this.now) / 1000) * this.slowMo;
         this.ctx.fillStyle = "rgba(0,0,0,0.5)";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        this.run(deltaTime);
+        this.run();
 
         this.now = now;
+        this.deltaTime = deltaTime;
     };
 
     /**
@@ -764,8 +766,9 @@ class Game {
      */
     displayText() {
         this.text("Score: " + this.score, this.canvas.height - 50);
-        this.text("Vie: " + this.life, this.canvas.height - 100);
-        this.text("Ennemis: " + this.totalEnemies, this.canvas.height - 150);
+        this.text("Life: " + this.life, this.canvas.height - 100);
+        this.text("Enemies: " + this.totalEnemies, this.canvas.height - 150);
+        this.text("Time: " + Math.floor(this.elapsedTime) + " s", this.canvas.height - 200);
     }
 
     /**
@@ -788,6 +791,8 @@ class Game {
         this.score = 0;
         this.enemies = [];
         this.totalEnemies = this.maxEnemies;
+        this.elapsedTime = 0;
+        this.startBtn.style.display = "none";
     }
 
     /***********************\
@@ -810,7 +815,7 @@ class Game {
         this.player.shootMass = mass;
     }
 
-    setPlayerShootSpeed(speed){
+    setPlayerShootSpeed(speed) {
         this.player.shootSpeed = speed;
     }
 
@@ -876,7 +881,7 @@ class Game {
      *  Définie le rayon des particules.
      * @type {number}
      */
-    setParticuleRadius(radius) {
+    setParticleRadius(radius) {
         this.particleRadius = radius;
     }
 
@@ -884,7 +889,7 @@ class Game {
      *  Définie le nombre maximal de particules autorisées.
      * @type {number}
      */
-    setParticuleMax(max) {
+    setParticleMax(max) {
         this.maxParticules = max;
     }
 
@@ -948,7 +953,7 @@ class Game {
         this.particleRadiusRadiusAfterColid = radius;
     }
 
-    setSlowMo(time){
+    setSlowMo(time) {
         this.slowMo = time;
     }
 
