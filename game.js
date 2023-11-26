@@ -74,11 +74,22 @@ class Player {
     }
 
     /**
-     * Fait tirer le joueur dans une direction donnée.
-     * @param {number} angle - Angle de tir en radians.
-     */
+  * Fait tirer le joueur dans une direction donnée.
+  * @param {number} angle - Angle de tir en radians.
+  */
     shoot(angle) {
-        this.shoots.push({ x: this.x, y: this.y, angle, mass: this.shootMass, speed: this.shootSpeed, radius: this.shootRadius });
+        this.shoots.push({
+            x: this.x,
+            y: this.y,
+            angle,
+            mass: this.shootMass,
+            speed: this.shootSpeed,
+            radius: this.shootRadius,
+            velocity: {
+                x: this.shootSpeed * Math.cos(angle),
+                y: this.shootSpeed * Math.sin(angle),
+            },
+        });
     }
 
     /**
@@ -87,12 +98,15 @@ class Player {
      */
     updateShoots(deltaTime) {
         this.shoots.forEach((shoot, index) => {
+            // Mettre à jour la position en utilisant la vélocité actuelle
+            shoot.x += shoot.velocity.x * deltaTime;
+            shoot.y += shoot.velocity.y * deltaTime;
+
+            // Mettre à jour la vélocité en fonction de l'accélération
             const acceleration = shoot.speed / shoot.mass;
+            shoot.velocity.x -= Math.cos(shoot.angle) * acceleration * deltaTime;
+            shoot.velocity.y -= Math.sin(shoot.angle) * acceleration * deltaTime;
 
-            shoot.speed += acceleration * deltaTime;
-
-            shoot.x += Math.cos(shoot.angle) * shoot.speed * deltaTime;
-            shoot.y += Math.sin(shoot.angle) * shoot.speed * deltaTime;
             this.drawShoot(shoot);
 
             if (this.isOutOfBounds(shoot)) {
@@ -346,12 +360,6 @@ class Game {
         this.velocityReductionFactor = 0.07;
 
         /**
-         * Facteur d'amortissement pour les collisions.
-         * @type {number}
-         */
-        this.dampingFactor = 0.8;
-
-        /**
          * Facteur de réduction du chevauchement pour les collisions.
          * @type {number}
          */
@@ -567,26 +575,26 @@ class Game {
         }
     }
 
-  handlePlayerCollision(particle, player) {
-    if (this.detectCollision(player, particle)) {
-        const angle = Math.atan2(particle.y - player.y, particle.x - player.x);
-        const overlap = particle.radius + player.radius - this.distance(player, particle);
+    handlePlayerCollision(particle, player) {
+        if (this.detectCollision(player, particle)) {
+            const angle = Math.atan2(particle.y - player.y, particle.x - player.x);
+            const overlap = particle.radius + player.radius - this.distance(player, particle);
 
-        // Correction de la position
-        particle.x += Math.cos(angle) * overlap * this.overlapReductionFactor;
-        particle.y += Math.sin(angle) * overlap * this.overlapReductionFactor;
+            // Correction de la position
+            particle.x += Math.cos(angle) * overlap * this.overlapReductionFactor;
+            particle.y += Math.sin(angle) * overlap * this.overlapReductionFactor;
 
-        // Correction de la vitesse
-        const speedAlongNormal = particle.velocity.x * Math.cos(angle) + particle.velocity.y * Math.sin(angle);
+            // Correction de la vitesse
+            const speedAlongNormal = particle.velocity.x * Math.cos(angle) + particle.velocity.y * Math.sin(angle);
 
-        if (speedAlongNormal < 0) {
-            const impulse = (2 * particle.mass) / (particle.mass + player.mass) * speedAlongNormal;
+            if (speedAlongNormal < 0) {
+                const impulse = (2 * particle.mass) / (particle.mass + player.mass) * speedAlongNormal;
 
-            particle.velocity.x -= impulse * Math.cos(angle);
-            particle.velocity.y -= impulse * Math.sin(angle);
+                particle.velocity.x -= impulse * Math.cos(angle);
+                particle.velocity.y -= impulse * Math.sin(angle);
+            }
         }
     }
-}
 
 
     handleOtherParticlesCollision(particle) {
@@ -626,6 +634,12 @@ class Game {
                 // Correction de la vitesse en tenant compte de la masse du tir
                 particle.velocity.x += Math.cos(angle) * shoot.mass;
                 particle.velocity.y += Math.sin(angle) * shoot.mass;
+
+                // shoot.x += Math.cos(angle) * particle.mass * this.deltaTime;
+                // shoot.y += Math.sin(angle) * particle.mass * this.deltaTime;
+                
+                shoot.velocity.x += Math.cos(angle) * particle.mass * this.deltaTime;
+                shoot.velocity.y += Math.sin(angle) * particle.mass * this.deltaTime;
             }
         }
     }
@@ -664,23 +678,23 @@ class Game {
         // Gestion des limites horizontales
         if (particle.x - particle.radius < 0) {
             particle.x = particle.radius;
-            particle.velocity.x *= -0.25;
+            particle.velocity.x *= -this.velocityReductionFactor;
         }
 
         if (particle.x + particle.radius > this.canvas.width) {
             particle.x = this.canvas.width - particle.radius;
-            particle.velocity.x *= -0.25;
+            particle.velocity.x *= -this.velocityReductionFactor;
         }
 
         // Gestion des limites verticales
         if (particle.y - particle.radius < 0) {
             particle.y = particle.radius;
-            particle.velocity.y *= -0.25;
+            particle.velocity.y *= -this.velocityReductionFactor;
         }
 
         if (particle.y + particle.radius > this.canvas.height) {
             particle.y = this.canvas.height - particle.radius;
-            particle.velocity.y *= -0.25;
+            particle.velocity.y *= -this.velocityReductionFactor;
         }
     }
 
@@ -912,21 +926,6 @@ class Game {
         this.velocityMagnitudeParticle = magnitude;
     }
 
-    /**
-     * Définie la valeur minimale pour la dispersion de l'angle.
-     * @type {number}
-     */
-    setMinAngleSpread(minAngleSpread) {
-        this.minAngleSpread = minAngleSpread;
-    }
-
-    /**
-     * Définie la valeur maximale pour la dispersion de l'angle.
-     * @type {number}
-     */
-    setMaxAngleSpread(maxAngleSpread) {
-        this.maxAngleSpread = maxAngleSpread;
-    }
 
     /**
      * Définie le facteur pour réduire la vitesse initiale des particules.
@@ -934,14 +933,6 @@ class Game {
      */
     setVelocityReductionFactor(velocityReductionFactor) {
         this.velocityReductionFactor = velocityReductionFactor;
-    }
-
-    /**
-     * Définie le facteur d'amortissement pour les collisions.
-     * @type {number}
-     */
-    setDampingFactor(dampingFactor) {
-        this.dampingFactor = dampingFactor;
     }
 
     /**

@@ -49,9 +49,6 @@ const setParameterChange = (button) => {
 };
 
 
-
-
-
 for (const button of setBtns) {
     const result = document.createElement("div");
     result.setAttribute("id", button.id + "Results");
