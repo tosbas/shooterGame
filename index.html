@@ -11,7 +11,7 @@
 <body>
 
     <button id="startBtn">Start</button>
-    <canvas></canvas>
+    <canvas id="canvas"></canvas>
 
     <div class="menu">
         <div class="menu-btn-container">
@@ -49,11 +49,11 @@
                 </div>
                 <div>
                     <span style="color: rgb(0, 0, 0);">EnemietimeEnemyAppear</span><input type="range"
-                        id="setEnemietimeEnemyAppear" min="100" value="1000" step="100" max="100000">
+                        id="setEnemietimeEnemyAppear" min="100" value="1000" step="100" max="5000">
                 </div>
                 <div>
-                    <span style="color: rgb(0, 0, 0);">EnemieSpeed</span><input type="range" id="setEnemieSpeed" min="0"
-                        value="1000" step="1" max="10000">
+                    <span style="color: rgb(0, 0, 0);">EnemieSpeed</span><input type="range" id="setEnemieSpeed" min="1"
+                        value="1000" step="1" max="1000">
                 </div>
                 <div>
                     <span style="color: rgb(0, 0, 0);">EnemieRadius</span><input type="range" id="setEnemieRadius"
@@ -77,7 +77,7 @@
                 </div>
                 <div>
                     <span style="color: rgb(0, 38, 255);">ParticleMass</span><input type="range" id="setParticleMass"
-                        min="0" value="8" max="10000" step="0.01">
+                        min="0" value="8" max="10" step="0.01">
                 </div>
                 <div>
                     <span style="color: rgb(0, 38, 255);">ParticleVelocityMagnitude</span><input type="range"

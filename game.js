@@ -12,7 +12,7 @@ class Player {
 
         this.ctx = ctx;
 
-        this.mass = 300;
+        this.mass = 100;
 
         /**
          * Position en abscisse du joueur.
@@ -57,6 +57,11 @@ class Player {
          * @type {Array<object>}
          */
         this.shoots = [];
+
+        this.velocity = {
+            x: 0,
+            y: 0,
+        }
     }
 
     /**
@@ -167,6 +172,8 @@ class Enemy {
 
         this.mass = enemieMass;
 
+        this.velocity = { x: 0, y: 0 };
+
         /**
          * Vitesse de déplacement aléatoire de l'ennemi.
          * @type {number}
@@ -214,37 +221,39 @@ class Enemy {
      */
     update(deltaTime, player) {
 
-        const acceleration = this.speed / this.mass;
+        const acceleration = this.speed / this.mass * deltaTime;
 
         this.speed += acceleration * deltaTime;
 
         const angle = Math.atan2(player.y - this.y, player.x - this.x);
-        this.x += Math.cos(angle) * this.speed * deltaTime;
-        this.y += Math.sin(angle) * this.speed * deltaTime;
+        this.velocity.x = Math.cos(angle) * this.speed;
+        this.velocity.y = Math.sin(angle) * this.speed;
+
+        this.x += this.velocity.x * deltaTime;
+        this.y += this.velocity.y * deltaTime;
     }
 }
 
 
 /**
  * Représente un jeu avec un joueur, des ennemis et divers éléments de jeu.
- * @param {Object} player - L'objet du joueur.
  * @param {number} [maxLife=Infinity] - La vie maximale du joueur.
  * @param {number} [maxEnemies=Infinity] - Le nombre maximum d'ennemis.
  */
 class Game {
-    constructor(canvas, ctx, startBtn, player, maxLife = Infinity, maxEnemies = Infinity) {
+    constructor(maxLife = Infinity, maxEnemies = Infinity) {
 
-        this.canvas = canvas;
+        this.canvas = document.getElementById("canvas");
 
-        this.ctx = ctx;
+        this.ctx = this.canvas.getContext("2d");
 
-        this.startBtn = startBtn;
+        this.startBtn = document.getElementById("startBtn");
 
         /**
          * Le joueur du jeu.
          * @type {Object}
          */
-        this.player = player;
+        this.player = new Player(this.canvas, this.ctx, "white");
 
         this.enemieSpeed = 1000;
 
@@ -476,6 +485,8 @@ class Game {
                 }
             });
         });
+
+
     }
 
     /**
@@ -507,8 +518,8 @@ class Game {
     handleShootEnemyCollision(shootIndex, enemyIndex) {
         const enemy = this.enemies[enemyIndex];
         const shoot = this.player.shoots[shootIndex];
-
-        this.createParticule(shoot, enemy);
+  
+        this.createParticle(enemy);
 
         this.enemies.splice(enemyIndex, 1);
         this.score++;
@@ -521,15 +532,9 @@ class Game {
         }
     }
 
-    /**
-     * Crée des particules lorsqu'un ennemi est touché.
-     * @param {Object} shoot - L'objet tir du joueur.
-     * @param {Object} enemy - L'objet ennemi touché.
-     */
-    createParticule(shoot, enemy) {
+    createParticle(enemy) {
         for (let i = 0; i < this.maxParticules; i++) {
             const angleWithSpread = this.minAngleSpread + Math.random() * (this.maxAngleSpread - this.minAngleSpread);
-
             this.particles.push({
                 x: enemy.x,
                 y: enemy.y,
@@ -545,9 +550,9 @@ class Game {
     }
 
     /**
-     * Met à jour les particules en fonction du temps écoulé.
-     * @param {number} deltaTime - Le temps écoulé depuis la dernière image.
-     */
+    * Met à jour les particules en fonction du temps écoulé.
+    * @param {number} deltaTime - Le temps écoulé depuis la dernière image.
+    */
     updateParticles(player, enemie) {
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const particle = this.particles[i];
@@ -574,6 +579,8 @@ class Game {
             }
         }
     }
+
+
 
     handlePlayerCollision(particle, player) {
         if (this.detectCollision(player, particle)) {
@@ -615,6 +622,8 @@ class Game {
 
                     otherParticle.velocity.x -= Math.cos(angle) * otherParticle.mass;
                     otherParticle.velocity.y -= Math.sin(angle) * otherParticle.mass;
+
+                    this.handleCollision(particle, otherParticle);
                 }
             }
         }
@@ -624,22 +633,7 @@ class Game {
         for (let k = 0; k < this.player.shoots.length; k++) {
             const shoot = this.player.shoots[k];
             if (this.detectCollision(shoot, particle)) {
-                const angle = Math.atan2(particle.y - shoot.y, particle.x - shoot.x);
-
-                // Correction de la position
-                const overlap = particle.radius + shoot.radius - this.distance(particle, shoot);
-                particle.x += Math.cos(angle) * overlap * this.overlapReductionFactor;
-                particle.y += Math.sin(angle) * overlap * this.overlapReductionFactor;
-
-                // Correction de la vitesse en tenant compte de la masse du tir
-                particle.velocity.x += Math.cos(angle) * shoot.mass;
-                particle.velocity.y += Math.sin(angle) * shoot.mass;
-
-                // shoot.x += Math.cos(angle) * particle.mass * this.deltaTime;
-                // shoot.y += Math.sin(angle) * particle.mass * this.deltaTime;
-                
-                shoot.velocity.x += Math.cos(angle) * particle.mass * this.deltaTime;
-                shoot.velocity.y += Math.sin(angle) * particle.mass * this.deltaTime;
+                this.handleCollision(shoot, particle);
             }
         }
     }
@@ -649,19 +643,34 @@ class Game {
         for (let i = 0; i < enemies.length; i++) {
             const enemy = enemies[i];
             if (this.detectCollision(enemy, particle)) {
-                const angle = Math.atan2(particle.y - enemy.y, particle.x - enemy.x);
-                const overlap = particle.radius + enemy.radius - this.distance(enemy, particle);
-
-                // Correction de la position
-                particle.x += Math.cos(angle) * overlap * this.overlapReductionFactor;
-                particle.y += Math.sin(angle) * overlap * this.overlapReductionFactor;
-
-                // Correction de la vitesse en tenant compte de la masse de l'ennemi
-                particle.velocity.x += Math.cos(angle) * enemy.mass;
-                particle.velocity.y += Math.sin(angle) * enemy.mass;
+                this.handleCollision(enemy, particle);
             }
         }
     }
+
+    handleCollision(p1, p2) {
+        let vCollision = { x: p2.x - p1.x, y: p2.y - p1.y };
+        let distance = Math.sqrt(vCollision.x ** 2 + vCollision.y ** 2);
+        let vCollisionNorm = { x: vCollision.x / distance, y: vCollision.y / distance };
+
+        if (distance === 0) {
+            return;
+        }
+
+        let vRelativeVelocity = { x: p1.velocity.x - p2.velocity.x, y: p1.velocity.y - p2.velocity.y };
+        let speed = vRelativeVelocity.x * vCollisionNorm.x + vRelativeVelocity.y * vCollisionNorm.y;
+
+        if (speed < 0) {
+            return;
+        }
+
+        let impulse = 2 * speed / (p1.mass + p2.mass);
+        p1.velocity.x -= impulse * p2.mass * vCollisionNorm.x;
+        p1.velocity.y -= impulse * p2.mass * vCollisionNorm.y;
+        p2.velocity.x += impulse * p1.mass * vCollisionNorm.x;
+        p2.velocity.y += impulse * p1.mass * vCollisionNorm.y;
+    }
+
 
     distance(obj1, obj2) {
         const dx = obj1.x - obj2.x;
@@ -697,7 +706,6 @@ class Game {
             particle.velocity.y *= -this.velocityReductionFactor;
         }
     }
-
     /**
      * Dessine les particules à l'écran.
      */

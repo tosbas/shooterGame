@@ -1,9 +1,6 @@
 import { Game, Player } from './game.js';
 
 const canvas = document.querySelector('canvas');
-const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-const startBtn = document.querySelector('#startBtn');
 const setBtns = document.querySelectorAll('[id*=set]');
 
 const menuItem = document.querySelector('.menu-item');
@@ -17,8 +14,7 @@ window.addEventListener('resize', () => {
     canvas.height = window.innerHeight;
 })
 
-const player = new Player(canvas, ctx, 'white');
-const game = new Game(canvas, ctx, startBtn, player);
+const game = new Game();
 
 game.run();
 
