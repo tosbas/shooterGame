@@ -25,7 +25,6 @@ const setterLocalStorage = [];
  * @param {object} button 
  */
 const setParameterChange = (button) => {
-
     const resultNode = document.getElementById(button.id + "Results");
     resultNode.innerHTML = button.value;
 
@@ -38,12 +37,14 @@ const setParameterChange = (button) => {
 
             const setterId = setterLocalStorage.findIndex(setter => setter.id === methode);
             setterLocalStorage[setterId].value = value;
-            setterLocalStorage.push({ "id": button.id, "value": button.value });
-            localStorage.setItem("config", JSON.stringify(setterLocalStorage));
+
+            if (localStorage.getItem("config")) {
+                localStorage.setItem("config", JSON.stringify(setterLocalStorage));
+
+            }
         }
     });
 };
-
 
 for (const button of setBtns) {
     const result = document.createElement("div");
@@ -57,14 +58,19 @@ for (const button of setBtns) {
 
     if (localStorage.getItem("config")) {
         const config = JSON.parse(localStorage.getItem('config'));
-        const setterId = config.findIndex(setter=> setter.id === button.id);
-        setterLocalStorage[setterId].value = parseFloat(config[setterId].value);
-        game[button.id](setterLocalStorage[setterId].value);
-        button.value = setterLocalStorage[setterId].value;
+        const setterId = config.findIndex(setter => setter.id === button.id);
+
+        if (setterId !== -1) {
+            setterLocalStorage[setterId].value = parseFloat(config[setterId].value);
+            game[button.id](setterLocalStorage[setterId].value);
+            button.value = setterLocalStorage[setterId].value;
+        }
     }
 
     setParameterChange(button);
 }
+
+
 
 menuOpen.addEventListener('click', () => {
     const computedStyle = window.getComputedStyle(menuItem);

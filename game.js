@@ -344,11 +344,6 @@ class Game {
 
         this.particleRadiusRadiusAfterColid = 0.03;
 
-        /**
-         * Magnitude de la vitesse des particules.
-         * @type {number}
-         */
-        this.velocityMagnitudeParticule = 0.5;
 
         /**
          * Valeur minimale pour la dispersion de l'angle.
@@ -473,9 +468,9 @@ class Game {
                 this.handlePlayerEnemyCollision(enemyIndex);
             }
 
-            this.player.shoots.forEach((shoot, shootIndex) => {
+            this.player.shoots.forEach((shoot) => {
                 if (this.detectCollision(shoot, enemy)) {
-                    this.handleShootEnemyCollision(shootIndex, enemyIndex);
+                    this.handleShootEnemyCollision(enemyIndex);
                 }
             });
         });
@@ -506,13 +501,11 @@ class Game {
 
     /**
      * Gère la collision entre un tir et un ennemi.
-     * @param {number} shootIndex - L'indice du tir dans le tableau des tirs du joueur.
      * @param {number} enemyIndex - L'indice de l'ennemi dans le tableau.
      */
-    handleShootEnemyCollision(shootIndex, enemyIndex) {
+    handleShootEnemyCollision(enemyIndex) {
         const enemy = this.enemies[enemyIndex];
-        const shoot = this.player.shoots[shootIndex];
-  
+
         this.createParticle(enemy);
 
         this.enemies.splice(enemyIndex, 1);
@@ -535,10 +528,10 @@ class Game {
                 color: enemy.color,
                 radius: this.particleRadius,
                 mass: this.particleMass,
-                speed:1,
+                speed: 1,
                 velocity: {
-                    x: Math.cos(angleWithSpread) * this.velocityMagnitudeParticule * this.velocityReductionFactor,
-                    y: Math.sin(angleWithSpread) * this.velocityMagnitudeParticule * this.velocityReductionFactor,
+                    x: Math.cos(angleWithSpread) * this.velocityReductionFactor,
+                    y: Math.sin(angleWithSpread) * this.velocityReductionFactor,
                 },
             });
         }
@@ -641,11 +634,11 @@ class Game {
 
         let impulse = 2 * speed / (p1.mass + p2.mass);
 
-        if(type !== "once"){
+        if (type !== "once") {
             p1.velocity.x -= impulse * p2.mass * vCollisionNorm.x;
             p1.velocity.y -= impulse * p2.mass * vCollisionNorm.y;
         }
-       
+
         p2.velocity.x += impulse * p1.mass * vCollisionNorm.x;
         p2.velocity.y += impulse * p1.mass * vCollisionNorm.y;
     }
@@ -904,15 +897,6 @@ class Game {
     setParticleMass(mass) {
         this.particleMass = mass;
     }
-
-    /**
-     * Définie la magnitude de la vitesse des particules.
-     * @type {number}
-     */
-    setParticleVelocityMagnitude(magnitude) {
-        this.velocityMagnitudeParticle = magnitude;
-    }
-
 
     /**
      * Définie le facteur pour réduire la vitesse initiale des particules.
