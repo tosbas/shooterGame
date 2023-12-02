@@ -369,12 +369,6 @@ class Game {
         this.velocityReductionFactor = 0.07;
 
         /**
-         * Facteur de réduction du chevauchement pour les collisions.
-         * @type {number}
-         */
-        this.overlapReductionFactor = 0.7;
-
-        /**
          * Taille du texte affiché à l'écran.
          * @type {number}
          */
@@ -541,6 +535,7 @@ class Game {
                 color: enemy.color,
                 radius: this.particleRadius,
                 mass: this.particleMass,
+                speed:1,
                 velocity: {
                     x: Math.cos(angleWithSpread) * this.velocityMagnitudeParticule * this.velocityReductionFactor,
                     y: Math.sin(angleWithSpread) * this.velocityMagnitudeParticule * this.velocityReductionFactor,
@@ -584,22 +579,7 @@ class Game {
 
     handlePlayerCollision(particle, player) {
         if (this.detectCollision(player, particle)) {
-            const angle = Math.atan2(particle.y - player.y, particle.x - player.x);
-            const overlap = particle.radius + player.radius - this.distance(player, particle);
-
-            // Correction de la position
-            particle.x += Math.cos(angle) * overlap * this.overlapReductionFactor;
-            particle.y += Math.sin(angle) * overlap * this.overlapReductionFactor;
-
-            // Correction de la vitesse
-            const speedAlongNormal = particle.velocity.x * Math.cos(angle) + particle.velocity.y * Math.sin(angle);
-
-            if (speedAlongNormal < 0) {
-                const impulse = (2 * particle.mass) / (particle.mass + player.mass) * speedAlongNormal;
-
-                particle.velocity.x -= impulse * Math.cos(angle);
-                particle.velocity.y -= impulse * Math.sin(angle);
-            }
+            this.handleCollision(player, particle, "once");
         }
     }
 
@@ -612,16 +592,11 @@ class Game {
                 if (this.detectCollision(particle, otherParticle)) {
                     const angle = Math.atan2(particle.y - otherParticle.y, particle.x - otherParticle.x);
 
-                    // Correction de la position
-                    const overlap = particle.radius + otherParticle.radius - this.distance(particle, otherParticle);
-                    particle.x += Math.cos(angle) * overlap * this.overlapReductionFactor;
-                    particle.y += Math.sin(angle) * overlap * this.overlapReductionFactor;
+                    particle.velocity.x += Math.cos(angle) * particle.speed;
+                    particle.velocity.y += Math.sin(angle) * particle.speed;
 
-                    particle.velocity.x += Math.cos(angle) * particle.mass;
-                    particle.velocity.y += Math.sin(angle) * particle.mass;
-
-                    otherParticle.velocity.x -= Math.cos(angle) * otherParticle.mass;
-                    otherParticle.velocity.y -= Math.sin(angle) * otherParticle.mass;
+                    otherParticle.velocity.x -= Math.cos(angle) * otherParticle.speed;
+                    otherParticle.velocity.y -= Math.sin(angle) * otherParticle.speed;
 
                     this.handleCollision(particle, otherParticle);
                 }
@@ -648,7 +623,7 @@ class Game {
         }
     }
 
-    handleCollision(p1, p2) {
+    handleCollision(p1, p2, type) {
         let vCollision = { x: p2.x - p1.x, y: p2.y - p1.y };
         let distance = Math.sqrt(vCollision.x ** 2 + vCollision.y ** 2);
         let vCollisionNorm = { x: vCollision.x / distance, y: vCollision.y / distance };
@@ -665,8 +640,12 @@ class Game {
         }
 
         let impulse = 2 * speed / (p1.mass + p2.mass);
-        p1.velocity.x -= impulse * p2.mass * vCollisionNorm.x;
-        p1.velocity.y -= impulse * p2.mass * vCollisionNorm.y;
+
+        if(type !== "once"){
+            p1.velocity.x -= impulse * p2.mass * vCollisionNorm.x;
+            p1.velocity.y -= impulse * p2.mass * vCollisionNorm.y;
+        }
+       
         p2.velocity.x += impulse * p1.mass * vCollisionNorm.x;
         p2.velocity.y += impulse * p1.mass * vCollisionNorm.y;
     }
@@ -941,14 +920,6 @@ class Game {
      */
     setVelocityReductionFactor(velocityReductionFactor) {
         this.velocityReductionFactor = velocityReductionFactor;
-    }
-
-    /**
-     * Définie le facteur de réduction du chevauchement pour les collisions.
-     * @type {number}
-     */
-    setOverlapReductionFactor(overlapReductionFactor) {
-        this.overlapReductionFactor = overlapReductionFactor;
     }
 
     setParticleRadiusAfterColid(radius) {
