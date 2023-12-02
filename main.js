@@ -37,11 +37,7 @@ const setParameterChange = (button) => {
 
             const setterId = setterLocalStorage.findIndex(setter => setter.id === methode);
             setterLocalStorage[setterId].value = value;
-
-            if (localStorage.getItem("config")) {
-                localStorage.setItem("config", JSON.stringify(setterLocalStorage));
-
-            }
+            localStorage.setItem("config", JSON.stringify(setterLocalStorage));
         }
     });
 };
