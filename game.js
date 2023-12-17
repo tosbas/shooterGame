@@ -729,7 +729,7 @@ class Game {
             this.currentCountEnemies++;
         }
 
-        setTimeout(() => this.addEnemy(), this.timeEnemyAppearInMs * (2 - this.deltaTime));
+        setTimeout(() => this.addEnemy(), this.timeEnemyAppearInMs / this.slowMo);
     }
 
     /**
